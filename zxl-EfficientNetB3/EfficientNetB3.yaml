@@ -1,0 +1,80 @@
+mode: 'train'
+ARCHITECTURE:
+    name: 'EfficientNetB3'
+
+pretrained_model: 
+    - "./pretrained/EfficientNetB3_pretrained/" 
+model_save_dir: "./output/"
+classes_num: 49
+total_images: 7227
+save_interval: 10          #每10个epoch保存一次
+validate: True
+valid_interval: 10         #每10个epoch验证一次
+epochs: 400
+topk: 5                    # 最高5类的准确度
+image_shape: [3, 600, 600]
+
+use_mix: True
+ls_epsilon: 0.1
+
+LEARNING_RATE:
+    function: 'CosineWarmup'  #Cosine          
+    params:                   
+        lr: 0.001             
+
+OPTIMIZER:
+    function: 'Momentum'
+    params:
+        momentum: 0.9
+    regularizer:
+        function: 'L2'
+        factor: 0.00000100
+
+TRAIN:
+    batch_size: 24
+    num_workers: 10
+    file_list: "/home/aistudio/work/datasets/train_clas.txt"
+    data_dir: "/home/aistudio/work/datasets/train/"
+    shuffle_seed: 0
+    transforms:
+        - DecodeImage:
+            to_rgb: True
+            to_np: False
+            channel_first: False
+        - ResizeImage:
+            resize_short: 660
+        - RandCropImage:
+            size: 600
+        - RandFlipImage:
+            flip_code: 1
+        - NormalizeImage:
+            scale: 1./255.
+            mean: [0.485, 0.456, 0.406]
+            std: [0.229, 0.224, 0.225]
+            order: ''
+        - ToCHWImage:
+    mix:                       
+        - MixupOperator:    
+            alpha: 0.2      
+
+VALID:
+    batch_size: 16
+    num_workers: 10
+    file_list: "/home/aistudio/work/datasets/eval_clas.txt"
+    data_dir: "/home/aistudio/work/datasets/train/"
+    shuffle_seed: 0
+    transforms:
+        - DecodeImage:
+            to_rgb: True
+            to_np: False
+            channel_first: False
+        - ResizeImage:
+            resize_short: 660
+        - CropImage:
+            size: 600
+        - NormalizeImage:
+            scale: 1.0/255.0
+            mean: [0.485, 0.456, 0.406]
+            std: [0.229, 0.224, 0.225]
+            order: ''
+        - ToCHWImage:
